@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <title>魚缸監測餵食系統</title>
+    <style>
+        h1 {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            background: url('https://cdn.shopify.com/s/files/1/2723/8896/files/home-aquarium_1024x1024.jpg?v=1671204221') 0 0 repeat-x;
+            position:relative;
+            height:100px;
+        }
+        h3 {
+            text-align: center;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr);
+            grid-template-columns: repeat(2, 1fr);
+            row-gap: 20px;
+            column-gap: 10px;
+            width: 50%;
+            height: 50%;
+        }
+        #camera-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        } 
+        #camera-stream {
+            max-width: 500px;
+            max-height: 400px;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        table {
+            margin: auto;
+            text-align: left;
+        }
+        td {
+            padding: 5px;
+        }
+        .button1 {
+            border-radius: 5px;
+            font-size:16px;
+            width:85px;
+        }
+        .button2 {
+            border-radius: 5px;
+            font-size:20px;
+        }
+        select {
+            border: 1px solid grey;
+            border-radius: 5px;
+            height: 25px;
+        }
+        input {
+            border: 1px solid silver;
+            border-radius: 5px;
+            width: 80px;
+        }
+        img {
+            border:2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>魚缸監測餵食系統</h1>
+
+    <form>
+        <table>
+            <tr>
+                <td>現在數值(每5分鐘更新一次)</td>
+                <td>預設數值集</td>
+                <td>自訂數值標準</td>
+            </tr>
+            <tr>
+                <td>pH值: {{ sensor_data.pH }}</td>
+                <td><select name="bottomSoil">
+                    <option value="">底砂類型</option>
+                    <option value="blackSoil">黑土</option>
+                    <option value="silicaSand">矽砂</option>
+                    <option value="OisoSand">大磯砂</option>                    
+                </select></td>
+                <td><input id="ph_less" name="ph_less" required></td>
+                <td><p> < ph值 < </p></td>
+                <td><input id="ph_greater" name="ph_greater" required></td>     
+            </tr>
+                <td>水溫: {{ sensor_data.temp }} °C</td>
+                <td><select name="waterWeed">
+                    <option value="">有無種水草(打CO2)</option>
+                    <option value="yes">有</option>
+                    <option value="no">沒有</option>
+                </select></td>  
+                <td><input id="temp_less" name="temp_less" required></td>
+                <td><p> < 水溫 < </p></td>
+                <td><input id="temp_greater" name="temp_greater" required></td> 
+            <tr>
+                <td>TDS值(總溶解固體): {{ sensor_data.TDS }} mg/L</td>
+                <td></td>              
+                <td><input id="tds_less" name="tds_less" required></td>
+                <td><p> < TDS值 < </p></td>
+                <td><input id="tds_greater" name="tds_greater" required></td> 
+            </tr>
+            <tr class="spacer">
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>設定補水高度</td>
+                <td></td>
+                <td>設定魚缸高度</td>
+            </tr>
+            <tr>
+                <td>水位高度: {{ sensor_data.current_waterLevel }} cm</td>
+                <td></td>
+                <td><input id="waterLevel_input" name="waterLevel_input"></td>
+                <td></td>
+                <td><input id="tankHeight_input" name="tankHeight_input"></td>
+            </tr>
+            <tr>
+                <td>更新時間: {{ sensor_data.timeStamp }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><button class="button1" type="submit">套用</button></td>
+            </tr>
+        </table>
+    </form>
+    <hr />
+
+    <div id="camera-container">
+        <img id="camera-stream" src="http://192.168.98.200:9000/?action=stream" alt="魚缸直播畫面">
+    </div>
+
+    <div>
+        <table>  
+            <tr>
+                <td><button class="button2" onclick="feedMotor()" type="button">搖一下飼料！</button></td>
+                <td><button class="button2" onclick="changeWater()" type="button">換水！</button></td>
+            </tr> 
+        </table>
+    </div>
+    <hr />
+    <h3>歷史數據</h3>
+    <div class="charts-container">
+        <canvas id="pHChart"></canvas>
+        <canvas id="tempChart"></canvas>
+        <canvas id="TDSChart"></canvas>
+        <canvas id="waterLevelChart"></canvas>
+    </div>
+
+    <script type="text/javascript">
+        // 將 Python 中的歷史數據傳遞到 JavaScript 中
+        var historicalData = [
+            {% for entry in historicalData %}
+                {
+                    pH: {{ entry.pH }},
+                    temp: {{ entry.temp }},
+                    TDS: {{ entry.TDS }},
+                    current_waterLevel: {{ entry.current_waterLevel }},
+                    timeStamp: new Date("{{ entry.timeStamp }}")
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        let date_list = historicalData.map(entry => entry.timeStamp);
+        let range_min = new Date(date_list[0]);
+        let range_max = new Date(date_list[date_list.length-1]);
+
+        // 設置 Chart.js 折線圖
+        var pHChart = new Chart(document.getElementById('pHChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: historicalData.map(entry => entry.timeStamp.toISOString()),
+                datasets: [{
+                    label: 'pH',
+                    data: historicalData.map(entry => ({ x: entry.timeStamp.toISOString(), y: entry.pH })),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                aspectRatio: 3,
+                scales: {
+                    x: {
+                        type: 'time',
+                        ticks: {
+                            autoSkip: false,
+                            autoSkipPadding: 50,
+                            maxRotation: 0
+                        },
+                        time: {
+                            displayFormats: {
+                                day: 'YYYY-MM-DD',
+                                hour: 'HH:mm',
+                                minute: 'HH:mm',
+                                second: 'HH:mm:ss'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '時間'
+                        },
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        limits: {
+                            x: {min: range_min, max: range_max, minRange: 60000},
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            drag: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: 'x',
+                        }
+                    }
+                }
+            }
+        });
+    
+        var tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: historicalData.map(entry => entry.timeStamp.toISOString()),
+                datasets: [{
+                    label: 'temp',
+                    data: historicalData.map(entry => ({ x: entry.timeStamp.toISOString(), y: entry.temp })),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                aspectRatio: 3,
+                scales: {
+                    x: {
+                        type: 'time',
+                        ticks: {
+                            autoSkip: false,
+                            autoSkipPadding: 50,
+                            maxRotation: 0
+                        },
+                        time: {
+                            displayFormats: {
+                                day: 'YYYY-MM-DD',
+                                hour: 'HH:mm',
+                                minute: 'HH:mm',
+                                second: 'HH:mm:ss'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '時間'
+                        },
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        limits: {
+                            x: {min: range_min, max: range_max, minRange: 60000},
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            drag: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: 'x',
+                        }
+                    }
+                }
+            }
+        });
+
+        var TDSChart = new Chart(document.getElementById('TDSChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: historicalData.map(entry => entry.timeStamp.toISOString()),
+                datasets: [{
+                    label: 'TDS',
+                    data: historicalData.map(entry => ({ x: entry.timeStamp.toISOString(), y: entry.TDS })),
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                aspectRatio: 3,
+                scales: {
+                    x: {
+                        type: 'time',
+                        ticks: {
+                            autoSkip: false,
+                            autoSkipPadding: 50,
+                            maxRotation: 0
+                        },
+                        time: {
+                            displayFormats: {
+                                day: 'YYYY-MM-DD',
+                                hour: 'HH:mm',
+                                minute: 'HH:mm',
+                                second: 'HH:mm:ss'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '時間'
+                        },
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        limits: {
+                            x: {min: range_min, max: range_max, minRange: 60000},
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            drag: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: 'x',
+                        }
+                    }
+                }
+            }
+        });
+
+        var waterLevelChart = new Chart(document.getElementById('waterLevelChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: historicalData.map(entry => entry.timeStamp.toISOString()),
+                datasets: [{
+                    label: 'waterLevel',
+                    data: historicalData.map(entry => ({ x: entry.timeStamp.toISOString(), y: entry.current_waterLevel })),
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                aspectRatio: 3,
+                scales: {
+                    x: {
+                        type: 'time',
+                        ticks: {
+                            autoSkip: false,
+                            autoSkipPadding: 50,
+                            maxRotation: 0
+                        },
+                        time: {
+                            displayFormats: {
+                                day: 'YYYY-MM-DD',
+                                hour: 'HH:mm',
+                                minute: 'HH:mm',
+                                second: 'HH:mm:ss'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '時間'
+                        },
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        limits: {
+                            x: {min: range_min, max: range_max, minRange: 60000},
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            drag: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: 'x',
+                        }
+                    }
+                }
+            }
+        });
+
+        function feedMotor() {
+            fetch('/feed')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        function changeWater() {
+            fetch('/changeWater')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        function setAspectRatio() {
+            pHChart.aspectRatio = 9;
+            pHChart.resize();
+            tempChart.aspectRatio = 9;
+            tempChart.resize();
+            TDSChart.aspectRatio = 9;
+            TDSChart.resize();
+            waterLevelChart.aspectRatio = 9;
+            waterLevelChart.resize();
+        }
+
+        setAspectRatio()
+    </script>
+</body>
+</html>
