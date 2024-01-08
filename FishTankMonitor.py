@@ -9,12 +9,6 @@ from datetime import datetime
 import spidev
 import fcntl
 
-SPICLK = 11
-SPIMISO = 9
-SPIMOSI = 10
-SPICS = 8
-
-# Channel connection of MCP3008
 #waterLevel_ch = 0
 tds_ch = 0
 ph_ch = 1
@@ -26,7 +20,7 @@ waterMotor2 = 24
 # Pin of feedMotor
 feedMotor1 = 13
 
-# pH
+# pH校正所需數值
 _acidVoltage = 2070
 _neutralVoltage = 1535
 
@@ -60,19 +54,19 @@ def init():
     GPIO.setup(trigger, GPIO.OUT)
     GPIO.setup(echo, GPIO.IN)
 
+# 讀取類比訊號轉成數位訊號的值
+# Reference: https://s761111.gitbook.io/raspi-sensor/pai-bi-wei-li
 def ReadADC(channel):
     try:
         if ((channel > 7) or (channel < 0)):
             return "Channel錯誤!"
-        time.sleep(0.5)
         adc = spi.xfer2([1,(8+channel)<<4,0])
-        time.sleep(0.5)
         adc_value = ((adc[1]&3)<<8) + adc[2]
         return adc_value
     except Exception as e:
         print("無法讀取ADC: {}".format(e))
         
-# 感測TDS值
+# 讀取TDS值
 def tds():
     try:
         time.sleep(0.1) 
@@ -80,7 +74,7 @@ def tds():
         voltage = adc_value * 3.3 / 1024.0
         
         if voltage == 0:
-            print("Error: Voltage is zero. Cannot calculate TDS.")
+            print("電壓為0，無法讀取TDS值")
             return 0
         
         tds_value = (133.42 / voltage * voltage * voltage - 255.86 * voltage * voltage + 857.39 * voltage) * 0.5
@@ -90,7 +84,8 @@ def tds():
     except Exception as e:
         print("TDS感測器運作失敗: {}".format(e))
 
-# 感測水溫
+# 讀取水溫
+# Reference: https://raspberrypi-guide.github.io/electronics/temperature-monitoring
 def waterTemp():
     try:
         with open(device_file, 'r') as f:
@@ -112,16 +107,18 @@ def waterTemp():
     except Exception as e:
         print("水溫感測器運作失敗: {}".format(e))
 
-# 感測pH值
+# 讀取pH值
 def ph():
-    global _acidVoltage
-    global _neutralVoltage
-    
     try:
         time.sleep(0.1) 
         adc_value=ReadADC(ph_ch)
         voltage = float(adc_value) * 5
         print("pH sensor的電壓為: " + str(voltage))
+        
+        if voltage == 0:
+            print("電壓為0，無法讀取pH值")
+            return 0
+        
         slope = (7.0-4.0)/((_neutralVoltage-1500.0)/3.0 - (_acidVoltage-1500.0)/3.0)
         intercept = 7.0 - slope*(_neutralVoltage-1500.0)/3.0
         ph_value  = slope*(voltage-1500.0)/3.0+intercept
@@ -130,7 +127,8 @@ def ph():
     except Exception as e:
         print("pH感測器運作失敗: {}".format(e))
 
-# 感測水位
+# 讀取水位
+# Reference: https://tutorials-raspberrypi.com/raspberry-pi-ultrasonic-sensor-hc-sr04/
 def waterLevel():
     try:
         GPIO.output(trigger, GPIO.LOW)
@@ -250,6 +248,8 @@ def feedMotor(p):
         p.ChangeDutyCycle(4)
         time.sleep(0.1)
         p.ChangeDutyCycle(0)
+        global lastFeedTimeStamp
+        lastFeedTimeStamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         print("餵食馬達運作失敗: {}".format(e))
 
@@ -266,14 +266,14 @@ def main():
             timeStamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             # 將各項數值寫入文件
-            with open('data.txt', 'a') as file:
+            with open('data_new.txt', 'a') as file:
                 fcntl.flock(file, fcntl.LOCK_EX)
                 file.write("{},{},{},{},{}\n".format(pH, temp, TDS, current_waterLevel, timeStamp))
             
             water_IN(current_waterLevel)
              
             # 如果有數值出現異常，傳送通知到LINE
-            lineNotify(pH, temp, TDS)
+            #lineNotify(pH, temp, TDS)
 
             # 多久紀錄一次
             time.sleep(5 * 60)

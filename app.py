@@ -33,7 +33,7 @@ def simulate_data_update():
     while True:
         try:         
             # 讀取資料
-            with open('data.txt', 'r') as file:
+            with open('data_new.txt', 'r') as file:
                 lines = file.readlines()
                 if lines:
                     historicalData = [
