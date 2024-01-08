@@ -148,12 +148,12 @@ def ReadADC(channel):
         print("無法讀取ADC: {}".format(e))
 ```
 ### 2. pH sensor
-1. Connect pH sensor to breadboard.
-  1. VCC -> 5v
-  2. GND -> GND
-  3. Signal -> MCP3008 channel (pick the channel you like)
-2. pH Calibration
-  1. Code:
+#### 1. Connect pH sensor to breadboard.
+1. VCC -> 5v
+2. GND -> GND
+3. Signal -> MCP3008 channel (pick the channel you like)
+#### 2. pH Calibration
+1. Code:
   ```python
    # Reference: https://github.com/DFRobot/DFRobot_PH/tree/master/python/raspberrypi
    import time
@@ -182,29 +182,29 @@ def ReadADC(channel):
     except Exception as e:
         print("pH感測器運作失敗: {}".format(e))
   ```
-  2. Run the code.
-  3. Plug the ph sensor into pH4 solution.
+2. Run the code.
+3. Plug the ph sensor into pH4 solution.
 
 ![171706_0](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/60814455-f295-45d8-8364-593a4a71f2c3)
 
-  4. Set _acidVoltage to return value of ph function.
-  5. Plug the ph sensor into pH7 solution.
+4. Set _acidVoltage to return value of ph function.
+5. Plug the ph sensor into pH7 solution.
 
 ![171707_0](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/dac3e269-837b-49dc-a64f-459eceea8bc4)
 
-  6. Set _neutralVoltage to return value of ph function.
+6. Set _neutralVoltage to return value of ph function.
 
 ### 3. TDS sensor
 #### 1. Connect TDS sensor to breadboard.
-  1. VCC -> 5v
-  2. GND -> GND
-  3. Signal -> MCP3008 channel (pick the channel you like, except the channel which already used by pH sensor)
+1. VCC -> 5v
+2. GND -> GND
+3. Signal -> MCP3008 channel (pick the channel you like, except the channel which already used by pH sensor)
 
 ### 4. Water temperature sensor
 #### 1. Connect water temperature sensor to breadboard.
-  1. VCC -> 5v
-  2. GND -> GND
-  3. Signal -> GPIO4
+1. VCC -> 5v
+2. GND -> GND
+3. Signal -> GPIO4
 
 ### 5. Ultrasonic sensor
 - Reference: https://tutorials-raspberrypi.com/raspberry-pi-ultrasonic-sensor-hc-sr04/
