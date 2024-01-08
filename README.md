@@ -11,30 +11,30 @@
 
 ## 3. Requirement
 ### 3.1 Components
-1. Raspberry Pi 4B * 1
-   * We build and run our project on Raspberry Pi.
-3. Breadboard (Full-sized)
-4. Sensors
-   * To achieve the goal of making a monitor system, we need some sensors, without them, we couldn't get any data we want.
-   1. DFRobot SEN0161 Gravity: Analog pH Sensor
-   2. Grove TDS sensor * 1
-   3. DS18B20 Water temperature sensor * 1
-   4. US-100 ultrasonic sensor * 1
-5. MCP3008
-	- Some of the sensors are analog output, Raspberry Pi can only read digital data, so we need an Analog-to-Digital Converter (ADC).
-6. Motors 
-	- We also need different types of motors.
-	1. 385 DC motor * 2
-	2. sg90 servo motor * 1
-7. 1-channel relay * 2
-	- You can also use the L298N motor driver to control the DC motor.
-8. Raspberry Pi camera module * 1
-9. Battery holder * 1 and AA battery * 4
-	- Power supply for 385 motor.
-10. PVC hose * 4 (inside diameter 6, outside diameter 8.5)
-11. Fish tank
-12. Container for water * 2
-13. A huge amount of jump wire is needed, make sure you prepare a bunch of them.
+#### 1. Raspberry Pi 4B * 1
+- We build and run our project on Raspberry Pi.
+#### 3. Breadboard (Full-sized)
+#### 4. Sensors
+- To achieve the goal of making a monitor system, we need some sensors, without them, we couldn't get any data we want.
+1. DFRobot SEN0161 Gravity: Analog pH Sensor
+2. Grove TDS sensor * 1
+3. DS18B20 Water temperature sensor * 1
+4. US-100 ultrasonic sensor * 1
+#### 5. MCP3008
+- Some of the sensors are analog output, Raspberry Pi can only read digital data, so we need an Analog-to-Digital Converter (ADC).
+#### 6. Motors 
+- We also need different types of motors.
+1. 385 DC motor * 2
+2. sg90 servo motor * 1
+#### 7. 1-channel relay * 2
+- You can also use the L298N motor driver to control the DC motor.
+#### 8. Raspberry Pi camera module * 1
+#### 9. Battery holder * 1 and AA battery * 4
+- Power supply for 385 motor.
+#### 10. PVC hose * 4 (inside diameter 6, outside diameter 8.5)
+#### 11. Fish tank * 1
+#### 12. Container for water * 2
+#### 13. A huge amount of jump wire is needed, make sure you prepare a bunch of them.
 
 ### 3.2 Environment 
 - Python 3.7 is used in this project.
