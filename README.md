@@ -313,6 +313,9 @@ with open('data_new.txt', 'r') as file:
 
 ### 10. LINE Notification
 - Reference: https://hackmd.io/@flagmaker/HkvK0aMDp
+
+![171729](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/2e77ea9f-f8bd-4d63-8411-39db1572ca8e)
+
 #### 1. Using Make instead of ITTT
 - Since some of the applets aren't free, I decided to use Make.
 - Just follow the steps in the reference tutorial, pretty simple.
