@@ -1,5 +1,7 @@
 # 物聯網期末專案 - 魚缸監測餵食系統
 
+![171728](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/46180c2a-38f1-4c62-b8c2-cb22a3a83948)
+
 ## 1. Introduction
 * This project aims to help those who need a monitor system for their fish tank when they are out for a long time. compared to the "Smart fish tank" on the market, we have the advantage that we can see our precious little guys swimming via any device, and feeding,  is also included, no matter where you are.
 
