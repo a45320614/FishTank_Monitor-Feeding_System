@@ -267,6 +267,14 @@ $ ./mjpg_streamer -i "./input_uvc.so -d /dev/video0 -n" -o "./output_http.so -p 
 ![171713_0](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/b8fa7ed3-57df-4630-89ea-0ad7f09ed9be)
 
 ### 9. Web
+
+![image](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/ba135972-07e1-4ee2-9fe2-79fec6da03f9)
+
+![image](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/a3127fcc-2113-4082-b3bc-0667cf300111)
+
+![image](https://github.com/a45320614/FishTank_Monitor-Feeding_System/assets/92359154/5d4dbe90-0017-49cb-aca3-746942c73cae)
+
+
 #### 1. Create your main program
 1. Setup the import, GPIO pin, spi, init().
 2. Setup the sensor reading function.
